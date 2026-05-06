@@ -27,20 +27,47 @@ export const data = new SlashCommandBuilder()
   )
   .addIntegerOption((o) =>
     o
-      .setName("المدة")
-      .setDescription("المدة بالدقائق")
-      .setRequired(true)
-      .setMinValue(1)
-      .setMaxValue(43200),
+      .setName("الأيام")
+      .setDescription("عدد الأيام")
+      .setRequired(false)
+      .setMinValue(0)
+      .setMaxValue(30),
+  )
+  .addIntegerOption((o) =>
+    o
+      .setName("الساعات")
+      .setDescription("عدد الساعات")
+      .setRequired(false)
+      .setMinValue(0)
+      .setMaxValue(23),
   )
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild);
+
+function formatDuration(days: number, hours: number): string {
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days} يوم`);
+  if (hours > 0) parts.push(`${hours} ساعة`);
+  return parts.join(" و ") || "أقل من ساعة";
+}
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const prize = interaction.options.getString("الجائزة", true);
   const winnersCount = interaction.options.getInteger("الفائزين", true);
-  const durationMinutes = interaction.options.getInteger("المدة", true);
+  const days = interaction.options.getInteger("الأيام") ?? 0;
+  const hours = interaction.options.getInteger("الساعات") ?? 0;
 
-  const endsAt = new Date(Date.now() + durationMinutes * 60 * 1000);
+  const totalMs = (days * 24 * 60 + hours * 60) * 60 * 1000;
+
+  if (totalMs <= 0) {
+    await interaction.reply({
+      content: "❌ لازم تحدد مدة! حط على الأقل ساعة وحدة أو يوم.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  const endsAt = new Date(Date.now() + totalMs);
+  const durationText = formatDuration(days, hours);
 
   const embed = new EmbedBuilder()
     .setColor(0x9b59b6)
@@ -49,7 +76,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       { name: "🏆 الجائزة", value: prize, inline: true },
       { name: "👑 عدد الفائزين", value: `${winnersCount}`, inline: true },
       { name: "👥 المشاركين", value: "0", inline: true },
-      { name: "⏳ المدة", value: `${durationMinutes} دقيقة`, inline: true },
+      { name: "⏳ المدة", value: durationText, inline: true },
       {
         name: "🕐 ينتهي",
         value: `<t:${Math.floor(endsAt.getTime() / 1000)}:R>`,
@@ -83,12 +110,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     ended: false,
   });
 
-  // Auto-end after duration
   setTimeout(async () => {
     await endGiveaway(msg.id, interaction);
-  }, durationMinutes * 60 * 1000);
+  }, totalMs);
 
-  logger.info({ prize, durationMinutes, winnersCount }, "Giveaway started");
+  logger.info({ prize, days, hours, winnersCount }, "Giveaway started");
 }
 
 async function endGiveaway(
@@ -108,14 +134,13 @@ async function endGiveaway(
 
   const participants = Array.from(giveaway.participants);
 
-  const disabledButton =
-    new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId("giveaway_join")
-        .setLabel("انتهى القيفاوي")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(true),
-    );
+  const disabledButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId("giveaway_join")
+      .setLabel("انتهى القيفاوي")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true),
+  );
 
   if (participants.length === 0) {
     const embed = new EmbedBuilder()
