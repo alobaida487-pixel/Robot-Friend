@@ -2,6 +2,7 @@ import {
   Client,
   GatewayIntentBits,
   Events,
+  ActivityType,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -33,6 +34,16 @@ export function startBot(): Client {
 
   client.once(Events.ClientReady, async (c) => {
     logger.info({ tag: c.user.tag }, "✅ البوت شغال");
+    c.user.setPresence({
+      activities: [
+        {
+          name: "Respect Town",
+          type: ActivityType.Streaming,
+          url: "https://www.twitch.tv/respecttown",
+        },
+      ],
+      status: "online",
+    });
     await deployCommands();
   });
 
