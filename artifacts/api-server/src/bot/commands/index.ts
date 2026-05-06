@@ -10,6 +10,8 @@ import * as warn from "./warn";
 import * as unban from "./unban";
 import * as serverinfo from "./serverinfo";
 import * as userinfo from "./userinfo";
+import * as gstart from "./gstart";
+import * as greroll from "./greroll";
 
 type Command = {
   data: SlashCommandOptionsOnlyBuilder;
@@ -18,7 +20,11 @@ type Command = {
 
 export const commands = new Collection<string, Command>();
 
-const all: Command[] = [ban, kick, timeout, untimeout, clear, warn, unban, serverinfo, userinfo];
+const all: Command[] = [
+  ban, kick, timeout, untimeout, clear, warn, unban,
+  serverinfo, userinfo,
+  gstart, greroll,
+];
 
 for (const cmd of all) {
   commands.set(cmd.data.name, cmd);
