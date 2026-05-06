@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { startBot } from "./bot/index";
 
 const rawPort = process.env["PORT"];
 
@@ -15,6 +16,10 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
+// Start Discord bot
+startBot();
+
+// Start HTTP server (used by UptimeRobot to keep the bot alive)
 app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
