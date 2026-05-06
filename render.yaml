@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: discord-bot
+    runtime: node
+    rootDir: artifacts/api-server
+    buildCommand: npm install -g pnpm@10 && pnpm install --frozen-lockfile=false && pnpm run build
+    startCommand: node --enable-source-maps ./dist/index.mjs
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
